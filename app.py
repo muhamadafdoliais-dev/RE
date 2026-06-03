@@ -188,7 +188,7 @@ if st.session_state.role is None:
 
 # --- HALAMAN ADMIN ---
 elif st.session_state.role == "admin":
-    st.markdown("<h1 class='main-title'>⚙️ Panel Kendali Admin Logistik</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='main-title'>⚙️ Panel Admin</h1>", unsafe_allow_html=True)
 
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "📊 Ringkasan & Statistik",
