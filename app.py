@@ -154,14 +154,14 @@ if "role" not in st.session_state:
 # Sidebar Global
 if st.session_state.role:
     with st.sidebar:
-        st.markdown(f"### 👤 Logged in as: **{st.session_state.role.upper()}**")
+        st.markdown(f"### 👤 Anda Sebagai : **{st.session_state.role.upper()}**")
         if st.button("🚪 Logout", use_container_width=True):
             st.session_state.role = None
             st.rerun()
 
 # --- HALAMAN LOGIN ---
 if st.session_state.role is None:
-    st.markdown("<h1 class='main-title'>🚚 Dashboard Rute Pengiriman </h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='main-title'>🚚 Rute Pengiriman 🚚</h1>", unsafe_allow_html=True)
 
     col1, col2 = st.columns([1, 1])
     with col1:
@@ -190,7 +190,7 @@ if st.session_state.role is None:
 
 # --- HALAMAN ADMIN ---
 elif st.session_state.role == "admin":
-    st.markdown("<h1 class='main-title'>⚙️ Panel Admin</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='main-title'>⚙️ Panel Admin ⚙️</h1>", unsafe_allow_html=True)
 
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "📊 Ringkasan & Statistik",
@@ -317,7 +317,7 @@ elif st.session_state.role == "admin":
     with tab4:
         st.subheader("Pembaruan Status Perjalanan Logistik")
         if not st.session_state.pengiriman:
-            st.info("Belum ada manifes pengiriman untuk di-update.")
+            st.info("Belum ada data pengiriman untuk di-update.")
         else:
             daftar_resi = [p["resi"] for p in st.session_state.pengiriman]
             selected_resi = st.selectbox("Pilih Nomor Resi yang Akan Diperbarui", daftar_resi)
@@ -373,7 +373,7 @@ elif st.session_state.role == "admin":
 
 # --- HALAMAN KONSUMEN ---
 elif st.session_state.role == "user":
-    st.markdown("<h1 class='main-title'>📦 Portal Konsumen</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='main-title'>📦 Portal Konsumen 📦</h1>", unsafe_allow_html=True)
 
     menu_user = st.tabs(["🔍 Lacak Paket Real-Time", "🗺️ Cek Jangkauan & Estimasi Rute"])
 
