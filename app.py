@@ -161,7 +161,7 @@ if st.session_state.role:
 
 # --- HALAMAN LOGIN ---
 if st.session_state.role is None:
-    st.markdown("<h1 class='main-title'>🚚 LogiRoute Dashboard</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='main-title'>🚚 Dashboard Rute Pengiriman </h1>", unsafe_allow_html=True)
 
     col1, col2 = st.columns([1, 1])
     with col1:
