@@ -7,7 +7,7 @@ import uuid
 # DATA USER & KONFIGURASI HALAMAN
 # =====================================
 st.set_page_config(
-    page_title="LogiRoute - Logistik Pintar",
+    page_title="Rute Pengiriman",
     page_icon="🚚",
     layout="wide",
 )
@@ -167,14 +167,14 @@ if st.session_state.role is None:
     with col1:
         st.markdown(
             """
-            ### Sistem Navigasi & Pengiriman Logistik Berbasis Struktur Data Graf.
+            ### Sistem Navigasi & Pengiriman Logistik Berbasis Struktur Data Graph.
             Aplikasi ini menggunakan **Algoritma Dijkstra** untuk mencari rute distribusi barang terpendek antar kota secara *real-time*, menghemat biaya operasional, dan menghitung estimasi waktu secara akurat.
         """
         )
 
     with col2:
         with st.form("login_form"):
-            st.markdown("### 🔐 Masuk ke Sistem")
+            st.markdown("### 🔐 Login Akun")
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
             submit = st.form_submit_button("Sign In", use_container_width=True)
@@ -209,15 +209,15 @@ elif st.session_state.role == "admin":
         m2.metric(label="Total Pendapatan Operasional", value=f"Rp {int(total_pendapatan):,}")
 
         st.markdown("---")
-        st.subheader("📋 Manifes Semua Pengiriman")
+        st.subheader("📋 Daftar Semua Pengiriman")
         if st.session_state.pengiriman:
             st.dataframe(st.session_state.pengiriman, use_container_width=True)
         else:
-            st.info("Belum ada data transaksi pengiriman hari ini.")
+            st.info("Belum ada data transaksi pengiriman.")
 
     # 2. TAB BUAT PENGIRIMAN
     with tab2:
-        st.subheader("Formulir Manifes Pengiriman Baru")
+        st.subheader("Formulir Data Pengiriman Baru")
         daftar_kota = navigator.get_semua_kota()
 
         if len(daftar_kota) < 2:
@@ -228,11 +228,11 @@ elif st.session_state.role == "admin":
                 with col1:
                     asal = st.selectbox("Kota Asal Distribusi", daftar_kota)
                     barang = st.text_input("Nama/Jenis Barang", placeholder="Contoh: Elektronik")
-                    kendaraan = st.selectbox("Armada Kendaraan", ["motor", "mobil", "truk"])
+                    kendaraan = st.selectbox("Kendaraan", ["Motor", "Mobil", "Truk"])
                 with col2:
                     tujuan = st.selectbox("Kota Tujuan Pengiriman", daftar_kota, index=1 if len(daftar_kota) > 1 else 0)
                     berat = st.number_input("Berat Muatan (Kg)", min_value=1.0, step=0.5)
-                    prioritas = st.selectbox("Tingkat Prioritas", ["reguler", "express", "same_day"])
+                    prioritas = st.selectbox("Tingkat Prioritas", ["Reguler", "Express", "Same_day"])
 
                 submit_kirim = st.form_submit_button("Proses Pengiriman & Terbitkan Resi", use_container_width=True)
 
@@ -261,15 +261,15 @@ elif st.session_state.role == "admin":
                             c2.info(f"💰 **Total Biaya:** Rp {int(biaya):,}")
                             c3.info(f"⏱️ **Estimasi Tiba:** {estimasi(distance, kendaraan)} Jam")
                         else:
-                            st.error("Gagal memproses. Tidak ada jalur graf yang menghubungkan kedua kota tersebut.")
+                            st.error("Gagal Memproses. Tidak ada jalur graph yang menghubungkan kedua kota tersebut.")
 
     # 3. TAB KELOLA PETA RUTE
     with tab3:
-        st.subheader("Modifikasi Struktur Jaringan Distribusi (Graf)")
+        st.subheader("Modifikasi Rute Pengiriman")
         col1, col2 = st.columns(2)
 
         with col1:
-            st.markdown("### 🏢 Tambah Node (Kota Baru)")
+            st.markdown("### 🏢 Tambah Kota")
             kota_baru = st.text_input("Nama Kota Baru").strip()
             if st.button("Daftarkan Kota", use_container_width=True):
                 if navigator.tambah_kota(kota_baru):
@@ -279,7 +279,7 @@ elif st.session_state.role == "admin":
                     st.error("Kota kosong atau sudah terdaftar.")
 
         with col2:
-            st.markdown("### 🛣️ Hubungkan Jalur Baru (Edge Waktu/Jarak)")
+            st.markdown("### 🛣️ Hubungkan Jalur Baru (Waktu/Jarak)")
             daftar_kota = navigator.get_semua_kota()
             if len(daftar_kota) >= 2:
                 c1, c2, c3 = st.columns(3)
@@ -309,7 +309,7 @@ elif st.session_state.role == "admin":
             status_opsi = ["Diproses", "Dijemput", "Di Gudang", "Dalam Perjalanan", "Sampai Tujuan", "Diantar Kurir", "Selesai"]
             selected_status = st.selectbox("Ubah Status Menjadi", status_opsi)
 
-            if st.button("Perbarui Manifes Perjalanan", use_container_width=True):
+            if st.button("Perbarui Status Perjalanan", use_container_width=True):
                 for p in st.session_state.pengiriman:
                     if p["resi"] == selected_resi:
                         p["status"] = selected_status
@@ -319,7 +319,7 @@ elif st.session_state.role == "admin":
 
     # 5. TAB CEK RUTE TERPENDEK
     with tab5:
-        st.subheader("Simulator Rute Terpendek (Dijkstra Solver)")
+        st.subheader("Simulator Rute Terpendek ")
         daftar_kota = navigator.get_semua_kota()
         col1, col2 = st.columns(2)
         t_asal = col1.selectbox("Titik Awal Navigasi", daftar_kota, key="t_asal")
@@ -339,11 +339,11 @@ elif st.session_state.role == "admin":
                     unsafe_allow_html=True,
                 )
             else:
-                st.error("Kedua area/kota ini terisolasi. Tidak ditemukan jalur penghubung di dalam Graf.")
+                st.error("Kedua area/kota ini terisolasi. Tidak ditemukan jalur penghubung di dalam Graph.")
 
 # --- HALAMAN KONSUMEN ---
 elif st.session_state.role == "user":
-    st.markdown("<h1 class='main-title'>📦 Portal Pelacakan Mandiri Konsumen</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='main-title'>📦 Portal Konsumen</h1>", unsafe_allow_html=True)
 
     menu_user = st.tabs(["🔍 Lacak Paket Real-Time", "🗺️ Cek Jangkauan & Estimasi Rute"])
 
@@ -361,7 +361,7 @@ elif st.session_state.role == "user":
 
             if paket_ditemukan:
                 badge_class = "status-transit"
-                if paket_ditemukan["status"] == "Diproses":
+                if paket_ditemukan["status"] == "Di proses":
                     badge_class = "status-process"
                 elif paket_ditemukan["status"] == "Selesai":
                     badge_class = "status-done"
