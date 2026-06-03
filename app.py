@@ -326,7 +326,7 @@ elif st.session_state.role == "admin":
             selected_status = st.selectbox("Ubah Status Menjadi", status_opsi)
 
             if st.button("Perbarui Status Perjalanan", use_container_width=True):
-                with St.spinner("Memperbarui manifes data log sistem..."):
+                with st.spinner("Memperbarui manifes data log sistem..."):
                     time.sleep(0.8)
                     resi_ditemukan = False
                     for p in st.session_state.pengiriman:
