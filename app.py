@@ -1,6 +1,7 @@
 from datetime import datetime
 import heapq
 import streamlit as st
+import time
 import uuid
 
 # =====================================
@@ -89,9 +90,8 @@ class Graph:
 
 
 # =====================================
-# INISIALISASI GRAPH STATE (DENGAN PENGECEKAN AMAN)
+# INISIALISASI GRAPH STATE (AMAN)
 # =====================================
-# Jika navigator belum ada, ATAU objek di state adalah objek versi lama (tidak punya fungsi get_semua_kota)
 if "navigator" not in st.session_state or not hasattr(st.session_state.navigator, "get_semua_kota"):
     navigator = Graph()
     jalur_awal = [
@@ -113,18 +113,18 @@ navigator = st.session_state.navigator
 # UTILITY FUNCTIONS
 # =====================================
 def hitung_biaya(jarak, berat, kendaraan, prioritas):
-    tarif = {"motor": 1000, "mobil": 2000, "truk": 3000}
+    tarif = {"Motor": 1000, "Mobil": 2000, "Truk": 3000}
     biaya = (jarak * tarif[kendaraan]) + (berat * 5000)
 
-    if prioritas == "express":
+    if prioritas == "Express":
         biaya *= 1.5
-    elif prioritas == "same_day":
+    elif prioritas == "Same_day":
         biaya *= 2.0
     return biaya
 
 
 def estimasi(jarak, kendaraan):
-    speed = {"motor": 40, "mobil": 60, "truk": 80}
+    speed = {"Motor": 40, "Mobil": 60, "Truk": 80}
     return round(jarak / speed[kendaraan], 1)
 
 
@@ -151,7 +151,7 @@ st.markdown(
 if "role" not in st.session_state:
     st.session_state.role = None
 
-# Sidebar Global (Selalu tampil jika sudah login)
+# Sidebar Global
 if st.session_state.role:
     with st.sidebar:
         st.markdown(f"### 👤 Logged in as: **{st.session_state.role.upper()}**")
@@ -180,11 +180,13 @@ if st.session_state.role is None:
             submit = st.form_submit_button("Sign In", use_container_width=True)
 
             if submit:
-                if username in users and users[username]["password"] == password:
-                    st.session_state.role = users[username]["role"]
-                    st.rerun()
-                else:
-                    st.error("Username atau password salah.")
+                with st.spinner("Memverifikasi kredensial..."):
+                    time.sleep(0.8)  # Efek loading simulasi singkat
+                    if username in users and users[username]["password"] == password:
+                        st.session_state.role = users[username]["role"]
+                        st.rerun()
+                    else:
+                        st.error("❌ Gagal Masuk: Username atau password salah.")
 
 # --- HALAMAN ADMIN ---
 elif st.session_state.role == "admin":
@@ -238,30 +240,33 @@ elif st.session_state.role == "admin":
 
                 if submit_kirim:
                     if asal == tujuan:
-                        st.error("Kota asal dan tujuan tidak boleh sama.")
+                        st.error("❌ Gagal Memproses: Kota asal dan tujuan tidak boleh sama.")
                     else:
-                        path, distance = navigator.dijkstra(asal, tujuan)
-                        if path:
-                            biaya = hitung_biaya(distance, berat, kendaraan, prioritas)
-                            resi = f"LR-{str(uuid.uuid4())[:8].upper()}"
+                        with st.spinner("Mencari rute terbaik dan menghitung administrasi..."):
+                            time.sleep(1.2)  # Animasi loading rute
+                            path, distance = navigator.dijkstra(asal, tujuan)
+                            
+                            if path:
+                                biaya = hitung_biaya(distance, berat, kendaraan, prioritas)
+                                resi = f"LR-{str(uuid.uuid4())[:8].upper()}"
 
-                            st.session_state.pengiriman.append({
-                                "resi": resi,
-                                "barang": barang,
-                                "asal": asal,
-                                "tujuan": tujuan,
-                                "status": "Diproses",
-                                "biaya": biaya,
-                                "history": [f"{datetime.now().strftime('%Y-%m-%d %H:%M')} - Paket Diproses di {asal}"],
-                            })
+                                st.session_state.pengiriman.append({
+                                    "resi": resi,
+                                    "barang": barang,
+                                    "asal": asal,
+                                    "tujuan": tujuan,
+                                    "status": "Diproses",
+                                    "biaya": biaya,
+                                    "history": [f"{datetime.now().strftime('%Y-%m-%d %H:%M')} - Paket Diproses di {asal}"],
+                                })
 
-                            st.success(f"✅ Pengiriman Berhasil Dibuat! Nomor Resi: **{resi}**")
-                            c1, c2, c3 = st.columns(3)
-                            c1.info(f"🛣️ **Rute Tercepat:** {' ➔ '.join(path)}")
-                            c2.info(f"💰 **Total Biaya:** Rp {int(biaya):,}")
-                            c3.info(f"⏱️ **Estimasi Tiba:** {estimasi(distance, kendaraan)} Jam")
-                        else:
-                            st.error("Gagal Memproses. Tidak ada jalur graph yang menghubungkan kedua kota tersebut.")
+                                st.success(f"✅ Berhasil! Pengiriman Telah Dibuat. Nomor Resi: **{resi}**")
+                                c1, c2, c3 = st.columns(3)
+                                c1.info(f"🛣️ **Rute Tercepat:** {' ➔ '.join(path)}")
+                                c2.info(f"💰 **Total Biaya:** Rp {int(biaya):,}")
+                                c3.info(f"⏱️ **Estimasi Tiba:** {estimasi(distance, kendaraan)} Jam")
+                            else:
+                                st.error("❌ Gagal Memproses: Tidak ada jalur jangkauan logistik yang menghubungkan kedua kota tersebut.")
 
     # 3. TAB KELOLA PETA RUTE
     with tab3:
@@ -272,11 +277,17 @@ elif st.session_state.role == "admin":
             st.markdown("### 🏢 Tambah Kota")
             kota_baru = st.text_input("Nama Kota Baru").strip()
             if st.button("Daftarkan Kota", use_container_width=True):
-                if navigator.tambah_kota(kota_baru):
-                    st.success(f"Kota '{kota_baru}' berhasil ditambahkan ke dalam sistem.")
-                    st.rerun()
+                if not kota_baru:
+                    st.error("❌ Gagal: Nama kota tidak boleh kosong.")
                 else:
-                    st.error("Kota kosong atau sudah terdaftar.")
+                    with st.spinner(f"Mendaftarkan kota {kota_baru} ke sistem..."):
+                        time.sleep(0.8)
+                        if navigator.tambah_kota(kota_baru):
+                            st.success(f"✅ Berhasil! Kota '{kota_baru}' sukses dimasukkan ke grafik jaringan.")
+                            time.sleep(0.5)
+                            st.rerun()
+                        else:
+                            st.error("❌ Gagal: Kota sudah terdaftar di dalam sistem.")
 
         with col2:
             st.markdown("### 🛣️ Hubungkan Jalur Baru (Waktu/Jarak)")
@@ -289,11 +300,16 @@ elif st.session_state.role == "admin":
 
                 if st.button("Hubungkan Rute", use_container_width=True):
                     if c_asal == c_tujuan:
-                        st.error("Tidak bisa menghubungkan kota yang sama.")
+                        st.error("❌ Gagal: Tidak bisa menghubungkan kota yang sama.")
                     else:
-                        if navigator.tambah_jalur(c_asal, c_tujuan, c_jarak):
-                            st.success(f"Jalur baru {c_asal} ⬌ {c_tujuan} ({c_jarak} KM) aktif.")
-                            st.rerun()
+                        with st.spinner(f"Menghubungkan {c_asal} dengan {c_tujuan}..."):
+                            time.sleep(1.0)
+                            if navigator.tambah_jalur(c_asal, c_tujuan, c_jarak):
+                                st.success(f"✅ Berhasil! Jalur {c_asal} ⬌ {c_tujuan} ({c_jarak} KM) kini aktif.")
+                                time.sleep(0.5)
+                                st.rerun()
+                            else:
+                                st.error("❌ Gagal: Jalur tersebut sudah ada sebelumnya.")
             else:
                 st.info("Minimal harus ada 2 kota terdaftar untuk membuat jalur penghubung.")
 
@@ -310,36 +326,50 @@ elif st.session_state.role == "admin":
             selected_status = st.selectbox("Ubah Status Menjadi", status_opsi)
 
             if st.button("Perbarui Status Perjalanan", use_container_width=True):
-                for p in st.session_state.pengiriman:
-                    if p["resi"] == selected_resi:
-                        p["status"] = selected_status
-                        p["history"].append(f"{datetime.now().strftime('%Y-%m-%d %H:%M')} - {selected_status}")
-                        st.success(f"Resi {selected_resi} berhasil diperbarui ke status: **{selected_status}**")
+                with St.spinner("Memperbarui manifes data log sistem..."):
+                    time.sleep(0.8)
+                    resi_ditemukan = False
+                    for p in st.session_state.pengiriman:
+                        if p["resi"] == selected_resi:
+                            p["status"] = selected_status
+                            p["history"].append(f"{datetime.now().strftime('%Y-%m-%d %H:%M')} - {selected_status}")
+                            resi_ditemukan = True
+                            break
+                    
+                    if resi_ditemukan:
+                        st.success(f"✅ Berhasil! Resi {selected_resi} diperbarui ke status: **{selected_status}**")
+                        time.sleep(0.5)
                         st.rerun()
+                    else:
+                        st.error("❌ Gagal: Resi tidak ditemukan atau gagal diproses.")
 
     # 5. TAB CEK RUTE TERPENDEK
     with tab5:
-        st.subheader("Simulator Rute Terpendek ")
+        st.subheader("Simulator Rute Terpendek")
         daftar_kota = navigator.get_semua_kota()
         col1, col2 = st.columns(2)
         t_asal = col1.selectbox("Titik Awal Navigasi", daftar_kota, key="t_asal")
         t_tujuan = col2.selectbox("Titik Akhir Navigasi", daftar_kota, key="t_tujuan")
 
         if st.button("Kalkulasi Rute", use_container_width=True):
-            path, distance = navigator.dijkstra(t_asal, t_tujuan)
-            if path:
-                st.markdown(
-                    f"""
-                <div class="card">
-                    <h4>Hasil Optimal Jalur Distribusi:</h4>
-                    <p style="font-size:1.25rem; color:#0EA5E9;"><b>{' ➜ '.join(path)}</b></p>
-                    <p>Total Akumulasi Jarak: <b>{distance} KM</b></p>
-                </div>
-                """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.error("Kedua area/kota ini terisolasi. Tidak ditemukan jalur penghubung di dalam Graph.")
+            with st.spinner("Memetakan matriks jarak terpendek (Dijkstra)..."):
+                time.sleep(0.9)
+                path, distance = navigator.dijkstra(t_asal, t_tujuan)
+                
+                if path:
+                    st.success("✅ Berhasil Menemukan Rute Optimal!")
+                    st.markdown(
+                        f"""
+                    <div class="card">
+                        <h4>Hasil Optimal Jalur Distribusi:</h4>
+                        <p style="font-size:1.25rem; color:#0EA5E9;"><b>{' ➜ '.join(path)}</b></p>
+                        <p>Total Akumulasi Jarak: <b>{distance} KM</b></p>
+                    </div>
+                    """,
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    st.error("❌ Gagal: Kedua area/kota ini terisolasi. Jalur penghubung tidak ditemukan di dalam sistem.")
 
 # --- HALAMAN KONSUMEN ---
 elif st.session_state.role == "user":
@@ -353,39 +383,44 @@ elif st.session_state.role == "user":
         input_resi = st.text_input("Nomor Resi Pengiriman", placeholder="Contoh: LR-ABC12345").strip().upper()
 
         if st.button("Lacak Keberadaan Paket", use_container_width=True):
-            paket_ditemukan = None
-            for p in st.session_state.pengiriman:
-                if p["resi"] == input_resi:
-                    paket_ditemukan = p
-                    break
-
-            if paket_ditemukan:
-                badge_class = "status-transit"
-                if paket_ditemukan["status"] == "Di proses":
-                    badge_class = "status-process"
-                elif paket_ditemukan["status"] == "Selesai":
-                    badge_class = "status-done"
-
-                st.markdown(
-                    f"""
-                    <div class="card">
-                        <h3>📋 Informasi Paket: {paket_ditemukan['barang']}</h3>
-                        <p>Status Terkini: <span class="status-badge {badge_class}">{paket_ditemukan['status']}</span></p>
-                        <p>Pengiriman: <b>{paket_ditemukan['asal']}</b> menuju <b>{paket_ditemukan['tujuan']}</b></p>
-                        <p>Total Administrasi: <b>Rp {int(paket_ditemukan['biaya']):,}</b></p>
-                    </div>
-                """,
-                    unsafe_allow_html=True,
-                )
-
-                st.markdown("### 🕒 Garis Waktu Riwayat Perjalanan (Log)")
-                for h in reversed(paket_ditemukan["history"]):
-                    st.markdown(f"- {h}")
+            if not input_resi:
+                st.error("❌ Gagal: Harap masukkan nomor resi terlebih dahulu.")
             else:
-                st.error("Nomor resi tidak valid atau tidak terdaftar di sistem kami.")
+                with st.spinner("Mencari data resi di database logistik..."):
+                    time.sleep(1.0)
+                    paket_ditemukan = None
+                    for p in st.session_state.pengiriman:
+                        if p["resi"] == input_resi:
+                            paket_ditemukan = p
+                            break
+
+                    if paket_ditemukan:
+                        st.success("✅ Resi Valid! Memuat status pelacakan.")
+                        badge_class = "status-transit"
+                        if paket_ditemukan["status"] == "Diproses":
+                            badge_class = "status-process"
+                        elif paket_ditemukan["status"] == "Selesai":
+                            badge_class = "status-done"
+
+                        st.markdown(
+                            f"""
+                            <div class="card">
+                                <h3>📋 Informasi Paket: {paket_ditemukan['barang']}</h3>
+                                <p>Status Terkini: <span class="status-badge {badge_class}">{paket_ditemukan['status']}</span></p>
+                                <p>Pengiriman: <b>{paket_ditemukan['asal']}</b> menuju <b>{paket_ditemukan['tujuan']}</b></p>
+                                <p>Total Administrasi: <b>Rp {int(paket_ditemukan['biaya']):,}</b></p>
+                            </div>
+                        """,
+                            unsafe_allow_html=True,
+                        )
+
+                        st.markdown("### 🕒 Garis Waktu Riwayat Perjalanan (Log)")
+                        for h in reversed(paket_ditemukan["history"]):
+                            st.markdown(f"- {h}")
+                    else:
+                        st.error("❌ Gagal: Nomor resi tidak valid atau tidak terdaftar di sistem kami.")
 
     # USER TAB 2: ESTIMASI
-
     with menu_user[1]:
         st.subheader("Cek Estimasi Jarak Antar Kota Mandiri")
         daftar_kota = navigator.get_semua_kota()
@@ -394,8 +429,12 @@ elif st.session_state.role == "user":
         u_tujuan = c2.selectbox("Kota Tujuan Pengantaran", daftar_kota, key="u_tujuan")
 
         if st.button("Cek Jalur Logistik", use_container_width=True):
-            path, distance = navigator.dijkstra(u_asal, u_tujuan)
-            if path:
-                st.info(f"Jalur Distribusi Kami: {' ➜ '.join(path)} (Jarak Tempuh: {distance} KM)")
-            else:
-                st.error("Maaf, rute pengiriman ke area tersebut belum tersedia saat ini.")
+            with st.spinner("Mencari jaringan distribusi jangkauan..."):
+                time.sleep(0.8)
+                path, distance = navigator.dijkstra(u_asal, u_tujuan)
+                
+                if path:
+                    st.success("✅ Rute Terjangkau oleh Layanan Kami!")
+                    st.info(f"Jalur Distribusi Kami: {' ➜ '.join(path)} (Jarak Tempuh: {distance} KM)")
+                else:
+                    st.error("❌ Maaf, rute pengiriman ke area tersebut belum tersedia saat ini.")
