@@ -89,9 +89,10 @@ class Graph:
 
 
 # =====================================
-# INISIALISASI GRAPH STATE
+# INISIALISASI GRAPH STATE (DENGAN PENGECEKAN AMAN)
 # =====================================
-if "navigator" not in st.session_state:
+# Jika navigator belum ada, ATAU objek di state adalah objek versi lama (tidak punya fungsi get_semua_kota)
+if "navigator" not in st.session_state or not hasattr(st.session_state.navigator, "get_semua_kota"):
     navigator = Graph()
     jalur_awal = [
         ("Jakarta", "Bandung", 150),
@@ -189,7 +190,6 @@ if st.session_state.role is None:
 elif st.session_state.role == "admin":
     st.markdown("<h1 class='main-title'>⚙️ Panel Kendali Admin Logistik</h1>", unsafe_allow_html=True)
 
-    # Menggunakan Tabs agar terlihat bersih, menggantikan Selectbox Sidebar lama
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "📊 Ringkasan & Statistik",
         "📦 Buat Pengiriman",
@@ -263,7 +263,7 @@ elif st.session_state.role == "admin":
                         else:
                             st.error("Gagal memproses. Tidak ada jalur graf yang menghubungkan kedua kota tersebut.")
 
-    # 3. TAB KELOLA PETA RUTE (GRAPH MANAGEMENT)
+    # 3. TAB KELOLA PETA RUTE
     with tab3:
         st.subheader("Modifikasi Struktur Jaringan Distribusi (Graf)")
         col1, col2 = st.columns(2)
